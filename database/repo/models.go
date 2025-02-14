@@ -4,17 +4,14 @@
 
 package repo
 
-import (
-	"github.com/jackc/pgx/v5/pgtype"
-)
-
 type Player struct {
 	ID        int32
-	PolarisID pgtype.Text
-	Name      pgtype.Text
-	Power     pgtype.Int4
-	Rank      pgtype.Int4
-	RegionID  pgtype.Int4
-	CreatedAt pgtype.Int4
-	UpdatedAt pgtype.Int4
+	PolarisID string
+	Name      string
+	Power     int32
+	Rank      int32
+	CharaID   int32
+	RegionID  int32
+	CreatedAt int64
+	UpdatedAt int64
 }

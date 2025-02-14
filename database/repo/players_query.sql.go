@@ -7,38 +7,36 @@ package repo
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const insertNewPlayer = `-- name: InsertNewPlayer :one
 insert into players (
-	id, polaris_id, name, power, rank, region_id, created_at, updated_at
+	polaris_id, name, power, rank, region_id, chara_id, created_at, updated_at
 ) values (
-	$1, $2,	$3, $4,	$5, $6, $7, $8
+	$1,	$2, $3,	$4, $5, $6, $7, $8
 )
-returning id, polaris_id, name, power, rank, region_id, created_at, updated_at
+returning id, polaris_id, name, power, rank, chara_id, region_id, created_at, updated_at
 `
 
 type InsertNewPlayerParams struct {
-	ID        int32
-	PolarisID pgtype.Text
-	Name      pgtype.Text
-	Power     pgtype.Int4
-	Rank      pgtype.Int4
-	RegionID  pgtype.Int4
-	CreatedAt pgtype.Int4
-	UpdatedAt pgtype.Int4
+	PolarisID string
+	Name      string
+	Power     int32
+	Rank      int32
+	RegionID  int32
+	CharaID   int32
+	CreatedAt int64
+	UpdatedAt int64
 }
 
 func (q *Queries) InsertNewPlayer(ctx context.Context, arg InsertNewPlayerParams) (Player, error) {
 	row := q.db.QueryRow(ctx, insertNewPlayer,
-		arg.ID,
 		arg.PolarisID,
 		arg.Name,
 		arg.Power,
 		arg.Rank,
 		arg.RegionID,
+		arg.CharaID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -49,6 +47,7 @@ func (q *Queries) InsertNewPlayer(ctx context.Context, arg InsertNewPlayerParams
 		&i.Name,
 		&i.Power,
 		&i.Rank,
+		&i.CharaID,
 		&i.RegionID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
