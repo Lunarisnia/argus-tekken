@@ -14,6 +14,7 @@ import (
 
 	"github.com/Lunarisnia/argus-tekken/database/repo"
 	"github.com/Lunarisnia/argus-tekken/internal/db"
+	"github.com/Lunarisnia/argus-tekken/internal/players"
 	"github.com/Lunarisnia/argus-tekken/internal/players/playermodels"
 	"github.com/Lunarisnia/argus-tekken/internal/wank/wankmodels"
 )
@@ -172,26 +173,22 @@ func main() {
 }
 
 func run() {
-	// TODO: Should only log a new data if the player has updated their name, rank, and region. and it has to be from a more recent data than the existing one BattleAt > UpdatedAt
 	// TODO: Create a player character database to log known character usages
+	// TODO: Create a cheater list table to actually list the cheater
 	safe, err := fetchAndScrape()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	playerService := players.NewPlayerService(queries)
+
 	dbInsertStart := time.Now()
 	fmt.Println("Inserting to database...")
 	for _, p := range safe.v {
-		queries.InsertNewPlayer(context.Background(), repo.InsertNewPlayerParams{
-			PolarisID: p.PolarisID,
-			// CharaID:   int32(p.CharaID), // We might want to move this to another database
-			// Power:     int32(p.Power),    // or this
-			Name:      p.Name,            // This should definitely update
-			Rank:      int32(p.Rank),     // This should update accordingly
-			RegionID:  int32(p.RegionID), // This should as well
-			CreatedAt: time.Now().Unix(),
-			UpdatedAt: p.UpdatedAt,
-		})
+		err := playerService.InsertNewPlayer(context.Background(), p)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	fmt.Println("Inserting finished. It took", time.Since(dbInsertStart).String())
 }

@@ -8,9 +8,7 @@ type Player struct {
 	ID        int32
 	PolarisID string
 	Name      string
-	Power     int32
 	Rank      int32
-	CharaID   int32
 	RegionID  int32
 	CreatedAt int64
 	UpdatedAt int64

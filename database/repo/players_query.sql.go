@@ -9,22 +9,39 @@ import (
 	"context"
 )
 
+const findLatestPlayerInfoByPolarisID = `-- name: FindLatestPlayerInfoByPolarisID :one
+select id, polaris_id, name, rank, region_id, created_at, updated_at from players where polaris_id = $1 order by updated_at desc limit 1
+`
+
+func (q *Queries) FindLatestPlayerInfoByPolarisID(ctx context.Context, polarisID string) (Player, error) {
+	row := q.db.QueryRow(ctx, findLatestPlayerInfoByPolarisID, polarisID)
+	var i Player
+	err := row.Scan(
+		&i.ID,
+		&i.PolarisID,
+		&i.Name,
+		&i.Rank,
+		&i.RegionID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const insertNewPlayer = `-- name: InsertNewPlayer :one
 insert into players (
-	polaris_id, name, power, rank, region_id, chara_id, created_at, updated_at
+	polaris_id, name, rank, region_id, created_at, updated_at
 ) values (
-	$1,	$2, $3,	$4, $5, $6, $7, $8
+	$1,	$2, $3,	$4, $5, $6
 )
-returning id, polaris_id, name, power, rank, chara_id, region_id, created_at, updated_at
+returning id, polaris_id, name, rank, region_id, created_at, updated_at
 `
 
 type InsertNewPlayerParams struct {
 	PolarisID string
 	Name      string
-	Power     int32
 	Rank      int32
 	RegionID  int32
-	CharaID   int32
 	CreatedAt int64
 	UpdatedAt int64
 }
@@ -33,10 +50,8 @@ func (q *Queries) InsertNewPlayer(ctx context.Context, arg InsertNewPlayerParams
 	row := q.db.QueryRow(ctx, insertNewPlayer,
 		arg.PolarisID,
 		arg.Name,
-		arg.Power,
 		arg.Rank,
 		arg.RegionID,
-		arg.CharaID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -45,9 +60,7 @@ func (q *Queries) InsertNewPlayer(ctx context.Context, arg InsertNewPlayerParams
 		&i.ID,
 		&i.PolarisID,
 		&i.Name,
-		&i.Power,
 		&i.Rank,
-		&i.CharaID,
 		&i.RegionID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
