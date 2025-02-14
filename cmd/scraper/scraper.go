@@ -62,10 +62,70 @@ func (s *SafePlayerRecorder) Debug() {
 }
 
 func main() {
+	// TODO: Should only log a new data if the player has updated their name, rank, and region. and it has to be from a more recent data than the existing one BattleAt > UpdatedAt
+	// TODO: Create a player character database to log known character usages
+	safe, err := fetchAndScrape()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	dbInsertStart := time.Now()
+	fmt.Println("Inserting to database...")
+	for _, p := range safe.v {
+		queries.InsertNewPlayer(context.Background(), repo.InsertNewPlayerParams{
+			PolarisID: p.PolarisID,
+			// CharaID:   int32(p.CharaID), // We might want to move this to another database
+			// Power:     int32(p.Power),    // or this
+			Name:      p.Name,            // This should definitely update
+			Rank:      int32(p.Rank),     // This should update accordingly
+			RegionID:  int32(p.RegionID), // This should as well
+			CreatedAt: time.Now().Unix(),
+			UpdatedAt: p.UpdatedAt,
+		})
+	}
+	fmt.Println("Inserting finished. It took", time.Since(dbInsertStart).String())
+}
+
+func getReplays(ctx context.Context) ([]wankmodels.Replay, error) {
+	client := http.Client{}
+
+	request, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://wank.wavu.wiki/api/replays",
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode > 299 || resp.StatusCode < 200 {
+		err := errors.New("non 200 response")
+		log.Println("Error Response: ", resp.Body)
+		return nil, err
+	}
+
+	replays := make([]wankmodels.Replay, 0)
+
+	err = json.NewDecoder(resp.Body).Decode(&replays)
+	if err != nil {
+		return nil, err
+	}
+
+	return replays, nil
+}
+
+func fetchAndScrape() (*SafePlayerRecorder, error) {
 	fmt.Println("Fetching Replays...")
 	replays, err := getReplays(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	fmt.Println("Finished Fetching Replays! Scrape Started")
 
@@ -129,58 +189,5 @@ func main() {
 	}
 
 	fmt.Println("Scraping finished. It took", time.Since(scrapeStart).String())
-
-	// TODO: Should only log a new data if the player has updated their name, rank, and region. and it has to be from a more recent data than the existing one BattleAt > UpdatedAt
-	// TODO: Create a player character database to log known character usages
-
-	dbInsertStart := time.Now()
-	fmt.Println("Inserting to database...")
-	for _, p := range safe.v {
-		queries.InsertNewPlayer(context.Background(), repo.InsertNewPlayerParams{
-			PolarisID: p.PolarisID,
-			// CharaID:   int32(p.CharaID), // We might want to move this to another database
-			// Power:     int32(p.Power),    // or this
-			Name:      p.Name,            // This should definitely update
-			Rank:      int32(p.Rank),     // This should update accordingly
-			RegionID:  int32(p.RegionID), // This should as well
-			CreatedAt: time.Now().Unix(),
-			UpdatedAt: p.UpdatedAt,
-		})
-	}
-	fmt.Println("Inserting finished. It took", time.Since(dbInsertStart).String())
-}
-
-func getReplays(ctx context.Context) ([]wankmodels.Replay, error) {
-	client := http.Client{}
-
-	request, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://wank.wavu.wiki/api/replays",
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := client.Do(request)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode > 299 || resp.StatusCode < 200 {
-		err := errors.New("non 200 response")
-		log.Println("Error Response: ", resp.Body)
-		return nil, err
-	}
-
-	replays := make([]wankmodels.Replay, 0)
-
-	err = json.NewDecoder(resp.Body).Decode(&replays)
-	if err != nil {
-		return nil, err
-	}
-
-	return replays, nil
+	return &safe, nil
 }
