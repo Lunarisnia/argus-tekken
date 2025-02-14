@@ -6,16 +6,37 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/Lunarisnia/argus-tekken/internal/db"
 	"github.com/Lunarisnia/argus-tekken/internal/wank/wankmodels"
+	"github.com/jackc/pgx/v5"
 )
+
+var (
+	dbURL string
+	conn  *pgx.Conn
+)
+
+func init() {
+	dbURL = os.Getenv("ARGUS_DB")
+	if dbURL == "" {
+		log.Fatal("please add your database url to env (ARGUS_DB)")
+	}
+
+	c, err := db.Connect(context.Background(), dbURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	conn = c
+}
 
 func main() {
 	_, err := getReplays(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
-	// TODO: Set up database
 }
 
 func getReplays(ctx context.Context) ([]wankmodels.Replay, error) {
