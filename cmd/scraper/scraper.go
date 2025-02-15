@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Lunarisnia/argus-tekken/database/repo"
+	"github.com/Lunarisnia/argus-tekken/internal/characters"
 	"github.com/Lunarisnia/argus-tekken/internal/db"
 	"github.com/Lunarisnia/argus-tekken/internal/players"
 	"github.com/Lunarisnia/argus-tekken/internal/players/playermodels"
@@ -134,6 +135,7 @@ func fetchAndScrape() (*SafePlayerRecorder, error) {
 					PolarisID: replay.P1PolarisID,
 					Name:      replay.P1Name,
 					Rank:      replay.P1Rank,
+					CharaID:   replay.P1CharaID,
 					RegionID:  replay.P1RegionID,
 					Timestamp: db.Timestamp{
 						UpdatedAt: replay.BattleAt,
@@ -143,6 +145,7 @@ func fetchAndScrape() (*SafePlayerRecorder, error) {
 					PolarisID: replay.P2PolarisID,
 					Name:      replay.P2Name,
 					Rank:      replay.P2Rank,
+					CharaID:   replay.P2CharaID,
 					RegionID:  replay.P2RegionID,
 					Timestamp: db.Timestamp{
 						UpdatedAt: replay.BattleAt,
@@ -173,19 +176,23 @@ func main() {
 }
 
 func run() {
-	// TODO: Create a player character database to log known character usages
-	// TODO: Create a cheater list table to actually list the cheater
 	safe, err := fetchAndScrape()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	playerService := players.NewPlayerService(queries)
+	charaService := characters.NewCharacterService(queries)
 
 	dbInsertStart := time.Now()
 	fmt.Println("Inserting to database...")
 	for _, p := range safe.v {
-		err := playerService.InsertNewPlayer(context.Background(), p)
+		ctx := context.Background()
+		err := playerService.InsertNewPlayer(ctx, p)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = charaService.RegisterNewPlayerCharacter(ctx, p.PolarisID, p.CharaID)
 		if err != nil {
 			log.Fatal(err)
 		}

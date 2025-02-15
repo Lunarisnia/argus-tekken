@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// TODO: Create a cheater list table to actually list the cheater
 func main() {
 	r := gin.Default()
 	r.GET("/ping", func(c *gin.Context) {

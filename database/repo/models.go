@@ -13,3 +13,11 @@ type Player struct {
 	CreatedAt int64
 	UpdatedAt int64
 }
+
+type PlayerCharacter struct {
+	ID        int32
+	PolarisID string
+	CharaID   int32
+	CreatedAt int64
+	UpdatedAt int64
+}
