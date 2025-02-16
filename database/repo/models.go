@@ -4,6 +4,26 @@
 
 package repo
 
+import (
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+type Cheater struct {
+	ID        int32
+	PolarisID string
+	CreatedAt int64
+	UpdatedAt int64
+}
+
+type Evidence struct {
+	ID              int32
+	PolarisID       pgtype.Text
+	EvidenceUrl     string
+	OffenceCategory string
+	CreatedAt       int64
+	UpdatedAt       int64
+}
+
 type Player struct {
 	ID        int32
 	PolarisID string
