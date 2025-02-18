@@ -17,43 +17,14 @@ func NewCheaterController(r *gin.RouterGroup, cs CheaterService) {
 	ctl := cheaterCtl{
 		cs: cs,
 	}
-	ctl.ping()
-	ctl.getAll()
 	ctl.newCheater()
+	ctl.newEvidence()
 
 	controllers.New(cheater, handlers...)
 }
 
 type cheaterCtl struct {
 	cs CheaterService
-}
-
-func (ch *cheaterCtl) getAll() {
-	handler := func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"foo": "bar",
-		})
-	}
-
-	handlers = controllers.RegisterHandler(handlers, controllers.RouteHandler{
-		Route:   "/",
-		Method:  http.MethodGet,
-		Handler: handler,
-	})
-}
-
-func (ch *cheaterCtl) ping() {
-	handler := controllers.RouteHandler{
-		Route:  "/ping",
-		Method: http.MethodGet,
-		Handler: func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{
-				"ping": "pong",
-			})
-		},
-	}
-
-	handlers = controllers.RegisterHandler(handlers, handler)
 }
 
 func (ch *cheaterCtl) newCheater() {
@@ -71,6 +42,38 @@ func (ch *cheaterCtl) newCheater() {
 			}
 
 			err := ch.cs.NewCheater(c.Request.Context(), newCheater)
+			if err != nil {
+				log.Println(err)
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"message": "Failed to insert",
+				})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"message": "OK",
+			})
+		},
+	}
+
+	handlers = controllers.RegisterHandler(handlers, h)
+}
+
+func (ch *cheaterCtl) newEvidence() {
+	h := controllers.RouteHandler{
+		Method: http.MethodPost,
+		Route:  "/evidence",
+		Handler: func(c *gin.Context) {
+			newEvidence := cheaterparams.NewEvidence{}
+			if err := c.ShouldBindBodyWithJSON(&newEvidence); err != nil {
+				log.Println(err)
+				c.JSON(http.StatusBadRequest, gin.H{
+					"message": "bad request",
+				})
+				return
+			}
+
+			err := ch.cs.NewEvidence(c.Request.Context(), newEvidence)
 			if err != nil {
 				log.Println(err)
 				c.JSON(http.StatusInternalServerError, gin.H{

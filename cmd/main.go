@@ -8,6 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// TODO: Get Cheater API
+// TODO: Get All cheaters
+
+// TODO: Get Evidence based on Polaris ID
+// TODO: Get all evidences
 func main() {
 	ctx := context.Background()
 

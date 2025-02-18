@@ -10,6 +10,7 @@ import (
 
 type CheaterService interface {
 	NewCheater(ctx context.Context, newCheater cheaterparams.NewCheater) error
+	NewEvidence(ctx context.Context, newEvidence cheaterparams.NewEvidence) error
 }
 
 type cheaterServiceImpl struct {
@@ -32,5 +33,20 @@ func (ch cheaterServiceImpl) NewCheater(ctx context.Context, newCheater cheaterp
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (ch cheaterServiceImpl) NewEvidence(ctx context.Context, newEvidence cheaterparams.NewEvidence) error {
+	_, err := ch.db.InsertNewEvidence(ctx, repo.InsertNewEvidenceParams{
+		PolarisID:       newEvidence.PolarisID,
+		OffenceCategory: newEvidence.OffenceCategory,
+		EvidenceUrl:     newEvidence.EvidenceURL,
+		CreatedAt:       time.Now().Unix(),
+		UpdatedAt:       time.Now().Unix(),
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
